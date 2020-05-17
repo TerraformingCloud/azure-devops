@@ -1,0 +1,105 @@
+# Terraform release pipeline
+
+name: 0.1.$(Rev:r)
+
+#  trigger:
+#    batch: true
+#    branches:
+#      include:
+#      - master
+#    paths:
+#      exclude:
+#        - /*.md
+
+
+# A pipeline with no CI trigger
+trigger: none
+
+variables:
+  terraform_version: '0.12.24'
+  tf_in_automation: true
+
+
+
+stages:
+- stage: Terraform_Plan
+  jobs:
+    - deployment: Terraform_Plan
+      displayName: Terraform_Plan
+      pool:
+       vmImage: 'vs2017-win2016'
+      environment: Terraform_Plan
+      strategy:
+        runOnce:
+          deploy:   
+            steps:
+              - checkout: self
+
+              - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+                displayName: 'Install Terraform'
+                inputs:
+                  terraformVersion: $(terraform_version)
+
+              - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+                displayName: 'Terraform Init'
+                inputs:
+                  command: init
+                  workingDirectory: '$(System.DefaultWorkingDirectory)/'
+                  backendType: azurerm
+                  backendServiceArm: 'Terraform SPN'
+                  backendAzureRmResourceGroupName: Jenkins
+                  backendAzureRmStorageAccountName: tfbackend2020
+                  backendAzureRmContainerName: 'tfremote'
+                  backendAzureRmKey: adoterraform.tfstate
+
+              - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+                displayName: 'Terraform Validate'
+                inputs:
+                  workingDirectory: '$(System.DefaultWorkingDirectory)/'
+
+              - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+                displayName: 'terraform plan'
+                inputs:
+                  command: plan
+                  workingDirectory: '$(System.DefaultWorkingDirectory)/'
+                  environmentServiceName: 'Terraform SPN'
+                  commandOptions: '-out=vnet.tfplan'
+
+
+- stage: Terraform_Apply
+  jobs:
+    - deployment: Terraform_Apply
+      displayName: Terraform_Apply
+      pool:
+       vmImage: 'vs2017-win2016'
+      environment: Terraform_Apply
+      strategy:
+        runOnce:
+          deploy:   
+            steps:
+              - checkout: self
+
+              - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+                displayName: 'Install Terraform'
+                inputs:
+                  terraformVersion: $(terraform_version)
+
+              - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+                displayName: 'Terraform Init'
+                inputs:
+                  command: init
+                  workingDirectory: '$(System.DefaultWorkingDirectory)/'
+                  backendType: azurerm
+                  backendServiceArm: 'Terraform SPN'
+                  backendAzureRmResourceGroupName: Jenkins
+                  backendAzureRmStorageAccountName: tfbackend2020
+                  backendAzureRmContainerName: 'tfremote'
+                  backendAzureRmKey: adoterraform.tfstate
+
+
+              - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+                displayName: 'terraform apply'
+                inputs:
+                  command: apply
+                  workingDirectory: '$(System.DefaultWorkingDirectory)/'
+                  environmentServiceName: 'Terraform SPN'
