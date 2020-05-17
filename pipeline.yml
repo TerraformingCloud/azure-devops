@@ -58,7 +58,7 @@ stages:
                   workingDirectory: '$(System.DefaultWorkingDirectory)/'
 
               - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
-                displayName: 'terraform plan'
+                displayName: 'Terraform Plan'
                 inputs:
                   command: plan
                   workingDirectory: '$(System.DefaultWorkingDirectory)/'
@@ -98,7 +98,7 @@ stages:
 
 
               - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
-                displayName: 'terraform apply'
+                displayName: 'Terraform Apply'
                 inputs:
                   command: apply
                   workingDirectory: '$(System.DefaultWorkingDirectory)/'
