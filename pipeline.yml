@@ -1,6 +1,8 @@
-# Terraform release pipeline
+# Terraform pipeline
 
 name: 0.1.$(Rev:r)
+
+# Pipeline CI Trigger 
 
 #  trigger:
 #    batch: true
@@ -13,11 +15,17 @@ name: 0.1.$(Rev:r)
 
 
 # A pipeline with no CI trigger
+
 trigger: none
 
 variables:
-  terraform_version: '0.12.24'
+  tf_version: '0.12.24'
   tf_in_automation: true
+  tf_dir: '$(System.DefaultWorkingDirectory)/'
+  backend_rg: 'Jenkins'
+  backend_sa_name: 'tfbackend2020'
+  backend_sc_name: 'tfremote'
+  backend_key: 'adoterraform.tfstate'
 
 
 
@@ -38,32 +46,31 @@ stages:
               - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
                 displayName: 'Install Terraform'
                 inputs:
-                  terraformVersion: $(terraform_version)
+                  terraformVersion: $(tf_version)
 
               - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
                 displayName: 'Terraform Init'
                 inputs:
                   command: init
-                  workingDirectory: '$(System.DefaultWorkingDirectory)/'
+                  workingDirectory: $(tf_dir)
                   backendType: azurerm
                   backendServiceArm: 'Terraform SPN'
-                  backendAzureRmResourceGroupName: Jenkins
-                  backendAzureRmStorageAccountName: tfbackend2020
-                  backendAzureRmContainerName: 'tfremote'
-                  backendAzureRmKey: adoterraform.tfstate
+                  backendAzureRmResourceGroupName: $(backend_rg)
+                  backendAzureRmStorageAccountName: $(backend_sa_name)
+                  backendAzureRmContainerName: $(backend_sc_name)
+                  backendAzureRmKey: $(backend_key)
 
               - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
                 displayName: 'Terraform Validate'
                 inputs:
-                  workingDirectory: '$(System.DefaultWorkingDirectory)/'
+                  workingDirectory: $(tf_dir)
 
               - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
                 displayName: 'Terraform Plan'
                 inputs:
                   command: plan
-                  workingDirectory: '$(System.DefaultWorkingDirectory)/'
+                  workingDirectory: $(tf_dir)
                   environmentServiceName: 'Terraform SPN'
-                  commandOptions: '-out=vnet.tfplan'
 
 
 - stage: Terraform_Apply
@@ -82,24 +89,23 @@ stages:
               - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
                 displayName: 'Install Terraform'
                 inputs:
-                  terraformVersion: $(terraform_version)
+                  terraformVersion: $(tf_version)
 
               - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
                 displayName: 'Terraform Init'
                 inputs:
                   command: init
-                  workingDirectory: '$(System.DefaultWorkingDirectory)/'
+                  workingDirectory: $(tf_dir)
                   backendType: azurerm
-                  backendServiceArm: 'Terraform SPN'
-                  backendAzureRmResourceGroupName: Jenkins
-                  backendAzureRmStorageAccountName: tfbackend2020
-                  backendAzureRmContainerName: 'tfremote'
-                  backendAzureRmKey: adoterraform.tfstate
+                  backendAzureRmResourceGroupName: $(backend_rg)
+                  backendAzureRmStorageAccountName: $(backend_sa_name)
+                  backendAzureRmContainerName: $(backend_sc_name)
+                  backendAzureRmKey: $(backend_key)
 
 
               - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
                 displayName: 'Terraform Apply'
                 inputs:
                   command: apply
-                  workingDirectory: '$(System.DefaultWorkingDirectory)/'
+                  workingDirectory: $(tf_dir)
                   environmentServiceName: 'Terraform SPN'
