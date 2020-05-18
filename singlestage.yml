@@ -22,7 +22,7 @@ variables:
   tf_version: '0.12.25'
   tf_in_automation: true
   tf_dir: '$(System.DefaultWorkingDirectory)/'
-  backend_rg: Azure DevOps
+  backend_rg: Azure-DevOps
   backend_sa_name: tfbackend2020
   backend_sc_name: tfremote
   backend_key: ado_singlestage_terraform.tfstate
